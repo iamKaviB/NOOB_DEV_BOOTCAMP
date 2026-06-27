@@ -1,0 +1,1007 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Day7 Test2 — Spring Boot REST API",
+    "description": "Complete CRUD REST API demonstrating JPA relationships, DTOs, and Jakarta Validation.\n\nRECOMMENDED TESTING ORDER:\n  Step 1 — Create Products (no dependencies)\n  Step 2 — Create Users   (UserProfile included inline)\n  Step 3 — Create Orders  (needs existing userId + productIds)\n\nChange {{baseUrl}} in the collection Variables tab if your server runs on a different port.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string",
+      "description": "Base URL of the running Spring Boot application"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Products",
+      "description": "Products have no dependencies on other entities. Always create products first so their IDs are available when creating orders.",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Returns all products as List<ProductResponseDTO>.\n\nNote: ProductResponseDTO does NOT include the 'orders' field — this intentionally breaks the Product <-> Order circular reference that would occur if entities were serialised directly."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  {\n    \"id\": 1,\n    \"name\": \"MacBook Pro\",\n    \"price\": 1999.99\n  },\n  {\n    \"id\": 2,\n    \"name\": \"Magic Mouse\",\n    \"price\": 79.99\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "1"]
+            },
+            "description": "Fetch a single product by its primary key. Returns 404 if not found."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"MacBook Pro\",\n  \"price\": 1999.99\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"Product not found with id: 999\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"MacBook Pro\",\n  \"price\": 1999.99\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Creates a new product.\n\nValidation rules (Jakarta):\n  - name   : @NotBlank\n  - price  : @NotNull + @Positive"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"MacBook Pro\",\n  \"price\": 1999.99\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"MacBook Pro\",\n  \"price\": 1999.99\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Second Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Magic Mouse\",\n  \"price\": 79.99\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Create a second product so the order can reference multiple product IDs."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Magic Mouse\",\n  \"price\": 79.99\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 2,\n  \"name\": \"Magic Mouse\",\n  \"price\": 79.99\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"MacBook Pro 16-inch\",\n  \"price\": 2199.99\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "1"]
+            },
+            "description": "Full update of an existing product. Same validation rules as POST apply."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"MacBook Pro 16-inch\",\n  \"price\": 2199.99\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"MacBook Pro 16-inch\",\n  \"price\": 2199.99\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "2"]
+            },
+            "description": "Deletes a product by ID. Returns 204 No Content on success."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/products/2",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products", "2"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Users",
+      "description": "A User is created with an inline UserProfile. The UserProfile is saved automatically via CascadeType.ALL on the @OneToOne relationship.",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Returns all users as List<UserResponseDTO>.\n\nCircular dependency handling:\n  - userProfile -> UserProfileResponseDTO (no User back-reference)\n  - orders     -> List<OrderSummaryDTO>  (id + trackingNumber only, no User or Products)"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  {\n    \"id\": 1,\n    \"username\": \"john_doe\",\n    \"userProfile\": {\n      \"id\": 1,\n      \"bio\": \"Senior Software Developer\",\n      \"phoneNumber\": \"+14155552671\"\n    },\n    \"orders\": [\n      { \"id\": 1, \"trackingNumber\": \"TRK-2024-001\" }\n    ]\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"username\": \"john_doe\",\n  \"userProfile\": {\n    \"id\": 1,\n    \"bio\": \"Senior Software Developer\",\n    \"phoneNumber\": \"+14155552671\"\n  },\n  \"orders\": []\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"User not found with id: 999\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john_doe\",\n  \"userProfile\": {\n    \"bio\": \"Senior Software Developer\",\n    \"phoneNumber\": \"+14155552671\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Creates a User with an inline UserProfile in one request.\n\nValidation rules:\n  - username              : @NotBlank\n  - userProfile           : @Valid  (cascades into nested DTO)\n  - userProfile.bio       : @NotBlank\n  - userProfile.phoneNumber: @NotBlank + @Pattern (7-15 digits, optional + prefix)"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"john_doe\",\n  \"userProfile\": {\n    \"bio\": \"Senior Software Developer\",\n    \"phoneNumber\": \"+14155552671\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"username\": \"john_doe\",\n  \"userProfile\": {\n    \"id\": 1,\n    \"bio\": \"Senior Software Developer\",\n    \"phoneNumber\": \"+14155552671\"\n  },\n  \"orders\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john_doe_updated\",\n  \"userProfile\": {\n    \"bio\": \"Lead Software Developer\",\n    \"phoneNumber\": \"+14155552671\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1"]
+            },
+            "description": "Updates an existing user's username and profile fields in-place. The existing UserProfile entity is updated (not replaced) to preserve its primary key."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"john_doe_updated\",\n  \"userProfile\": {\n    \"bio\": \"Lead Software Developer\",\n    \"phoneNumber\": \"+14155552671\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"username\": \"john_doe_updated\",\n  \"userProfile\": {\n    \"id\": 1,\n    \"bio\": \"Lead Software Developer\",\n    \"phoneNumber\": \"+14155552671\"\n  },\n  \"orders\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1"]
+            },
+            "description": "Deletes the user AND their UserProfile automatically (CascadeType.ALL on @OneToOne). Returns 204 No Content."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "1"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. User Profiles (standalone)",
+      "description": "UserProfiles can also be managed independently via this controller. Typically a profile is created inline with its User, but these endpoints allow direct management.",
+      "item": [
+        {
+          "name": "Get All Profiles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profiles"]
+            },
+            "description": "Returns UserProfileResponseDTO list — no User back-reference, avoiding UserProfile <-> User circular dependency."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profiles",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profiles"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  {\n    \"id\": 1,\n    \"bio\": \"Senior Software Developer\",\n    \"phoneNumber\": \"+14155552671\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Profile by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profiles", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profiles/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profiles", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"bio\": \"Senior Software Developer\",\n  \"phoneNumber\": \"+14155552671\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Profile (standalone)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Full Stack Developer\",\n  \"phoneNumber\": \"+447911123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profiles"]
+            },
+            "description": "Validates: bio @NotBlank; phoneNumber @NotBlank + @Pattern (7-15 digits, optional + prefix)."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"bio\": \"Full Stack Developer\",\n  \"phoneNumber\": \"+447911123456\"\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/profiles",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profiles"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 2,\n  \"bio\": \"Full Stack Developer\",\n  \"phoneNumber\": \"+447911123456\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Backend Developer\",\n  \"phoneNumber\": \"+447911123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profiles", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"bio\": \"Backend Developer\",\n  \"phoneNumber\": \"+447911123456\"\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/profiles/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profiles", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"bio\": \"Backend Developer\",\n  \"phoneNumber\": \"+447911123456\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Profile",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profiles", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profiles/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profiles", "1"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Orders",
+      "description": "Orders link a User to a list of Products (Many-to-Many via join table 'order_products'). Create users and products before creating orders.\n\nThe request body sends IDs only (userId, productIds[]) — the service layer resolves them to entities.",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"]
+            },
+            "description": "Returns List<OrderResponseDTO>.\n\nCircular dependency handling:\n  - user     -> userId (Long only, not full User object)\n  - products -> List<ProductResponseDTO> (no orders back-reference)"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/orders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "orders"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  {\n    \"id\": 1,\n    \"trackingNumber\": \"TRK-2024-001\",\n    \"userId\": 1,\n    \"products\": [\n      { \"id\": 1, \"name\": \"MacBook Pro\",  \"price\": 1999.99 },\n      { \"id\": 2, \"name\": \"Magic Mouse\",  \"price\": 79.99  }\n    ]\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/orders/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "orders", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"trackingNumber\": \"TRK-2024-001\",\n  \"userId\": 1,\n  \"products\": [\n    { \"id\": 1, \"name\": \"MacBook Pro\", \"price\": 1999.99 },\n    { \"id\": 2, \"name\": \"Magic Mouse\", \"price\": 79.99 }\n  ]\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/orders/999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "orders", "999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"Order not found with id: 999\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Orders by User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/user/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "user", "1"]
+            },
+            "description": "Custom query defined in OrderRepository: findByUserId(Long userId). Returns all orders that belong to the given user."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/orders/user/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "orders", "user", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  {\n    \"id\": 1,\n    \"trackingNumber\": \"TRK-2024-001\",\n    \"userId\": 1,\n    \"products\": [\n      { \"id\": 1, \"name\": \"MacBook Pro\", \"price\": 1999.99 }\n    ]\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackingNumber\": \"TRK-2024-001\",\n  \"userId\": 1,\n  \"productIds\": [1, 2]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"]
+            },
+            "description": "Creates an order linking User(1) to Products(1, 2) via the order_products join table.\n\nValidation rules:\n  - trackingNumber : @NotBlank\n  - userId         : @NotNull\n  - productIds     : @NotEmpty (at least one)\n\nThe service resolves userId -> User entity and productIds -> List<Product> before saving."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"trackingNumber\": \"TRK-2024-001\",\n  \"userId\": 1,\n  \"productIds\": [1, 2]\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/orders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "orders"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"trackingNumber\": \"TRK-2024-001\",\n  \"userId\": 1,\n  \"products\": [\n    { \"id\": 1, \"name\": \"MacBook Pro\", \"price\": 1999.99 },\n    { \"id\": 2, \"name\": \"Magic Mouse\", \"price\": 79.99 }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackingNumber\": \"TRK-2024-001-UPDATED\",\n  \"userId\": 1,\n  \"productIds\": [1]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "1"]
+            },
+            "description": "Updates an existing order. The product list is fully replaced — remove product 2 from the order in this example."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"trackingNumber\": \"TRK-2024-001-UPDATED\",\n  \"userId\": 1,\n  \"productIds\": [1]\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/orders/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "orders", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"trackingNumber\": \"TRK-2024-001-UPDATED\",\n  \"userId\": 1,\n  \"products\": [\n    { \"id\": 1, \"name\": \"MacBook Pro\", \"price\": 1999.99 }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Order",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "1"]
+            },
+            "description": "Deletes the order row and its join table entries in order_products. Returns 204 No Content."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/orders/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "orders", "1"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Validation Tests (expect 400)",
+      "description": "These requests are intentionally invalid. Use them to observe how GlobalExceptionHandler intercepts MethodArgumentNotValidException and returns a field-level error map with HTTP 400.",
+      "item": [
+        {
+          "name": "INVALID — Create Product (blank name, negative price)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"price\": -50\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Triggers @NotBlank on name and @Positive on price."
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"\",\n  \"price\": -50\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "products"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"name\": \"Product name is required\",\n  \"price\": \"Price must be greater than zero\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "INVALID — Create User (blank username, bad phone)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"\",\n  \"userProfile\": {\n    \"bio\": \"\",\n    \"phoneNumber\": \"abc\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Demonstrates nested @Valid cascade: errors on username, userProfile.bio, and userProfile.phoneNumber all appear in the same response."
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"\",\n  \"userProfile\": {\n    \"bio\": \"\",\n    \"phoneNumber\": \"abc\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"username\": \"Username is required\",\n  \"userProfile.bio\": \"Bio is required\",\n  \"userProfile.phoneNumber\": \"Phone number must be 7\\u201315 digits, optionally starting with +\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "INVALID — Create Order (missing all required fields)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trackingNumber\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"]
+            },
+            "description": "Triggers @NotBlank on trackingNumber, @NotNull on userId, and @NotEmpty on productIds simultaneously."
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"trackingNumber\": \"\"\n}" },
+                "url": {
+                  "raw": "{{baseUrl}}/api/orders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "orders"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"trackingNumber\": \"Tracking number is required\",\n  \"userId\": \"User ID is required\",\n  \"productIds\": \"At least one product ID is required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "INVALID — Get Non-Existent Resource (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/9999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "9999"]
+            },
+            "description": "Triggers RuntimeException('User not found with id: 9999') which GlobalExceptionHandler catches and returns as 404."
+          },
+          "response": [
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/9999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "9999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"User not found with id: 9999\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
